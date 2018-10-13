@@ -1,13 +1,18 @@
 package fr.free.nrw.commons.contributions;
 
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,6 +25,7 @@ import android.widget.ListAdapter;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.inject.Inject;
@@ -38,6 +44,7 @@ import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.app.Activity.RESULT_OK;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.view.View.GONE;
+import static fr.free.nrw.commons.contributions.ContributionController.SELECT_FROM_GALLERY;
 
 public class ContributionsListFragment extends CommonsDaggerSupportFragment {
 
@@ -128,12 +135,38 @@ public class ContributionsListFragment extends CommonsDaggerSupportFragment {
                 // If coming from camera, pass null as uri. Because camera photos get saved to a
                 // fixed directory
                 controller.handleImagePicked(requestCode, null, false, null);
+            } else if (requestCode == ContributionController.PICK_IMAGE_MULTIPLE) {
+                handleMultipleImages(requestCode, data);
             } else {
                 controller.handleImagePicked(requestCode, data.getData(), false, null);
             }
         } else {
             Timber.e("OnActivityResult() parameters: Req code: %d Result code: %d Data: %s",
                     requestCode, resultCode, data);
+        }
+    }
+
+    private void handleMultipleImages(int requestCode, Intent data) {
+        if (getContext() == null) {
+            return;
+        }
+        if (data.getData() != null) {
+            controller.handleImagePicked(SELECT_FROM_GALLERY, data.getData(), false, null);
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                if (data.getClipData() != null) {
+                    ClipData mClipData = data.getClipData();
+                    ArrayList<Uri> mArrayUri = new ArrayList<Uri>();
+                    for (int i = 0; i < mClipData.getItemCount(); i++) {
+
+                        ClipData.Item item = mClipData.getItemAt(i);
+                        Uri uri = item.getUri();
+                        mArrayUri.add(uri);
+                    }
+                    Log.v("LOG_TAG", "Selected Images" + mArrayUri.size());
+                    controller.handleImagesPicked(requestCode, mArrayUri);
+                }
+            }
         }
     }
 

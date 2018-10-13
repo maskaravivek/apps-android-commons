@@ -44,11 +44,11 @@ class DirectUpload {
                             4);
                 }
             } else {
-                controller.startGalleryPick();
+                controller.startSingleGalleryPick();
             }
         }
         else {
-            controller.startGalleryPick();
+            controller.startSingleGalleryPick();
         }
     }
 
