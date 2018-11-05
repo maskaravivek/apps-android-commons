@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.BitmapRegionDecoder;
 import android.net.Uri;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +38,7 @@ import timber.log.Timber;
 public class UploadModel {
 
     MediaWikiApi mwApi;
-    private static UploadItem DUMMY = new UploadItem(Uri.EMPTY, "", "", GPSExtractor.DUMMY, "", null) {
+    private static UploadItem DUMMY = new UploadItem(Uri.EMPTY, "", "", GPSExtractor.DUMMY, "", null,-1l) {
         @Override
         public boolean isDummy() {
             return true;
@@ -58,6 +60,7 @@ public class UploadModel {
 
     @Inject
     SessionManager sessionManager;
+    private Uri currentMediaUri;
 
     @Inject
     UploadModel(@Named("licenses") List<String> licenses,
@@ -79,12 +82,16 @@ public class UploadModel {
     public void receive(List<Uri> mediaUri, String mimeType, String source) {
         currentStepIndex = 0;
         Observable<UploadItem> itemObservable = Observable.fromIterable(mediaUri)
-                .map(this::cacheFileUpload)
+                .map(media -> {
+                    currentMediaUri=media;
+                    return cacheFileUpload(media);
+                })
                 .map(filePath -> {
+                    long fileCreatedDate = getFileCreatedDate(currentMediaUri);
                     Uri uri = Uri.fromFile(new File(filePath));
                     FileProcessor fp = new FileProcessor(filePath, context.getContentResolver(), context);
                     UploadItem item = new UploadItem(uri, mimeType, source, fp.processFileCoordinates(),
-                            FileUtils.getFileExt(filePath), null);
+                            FileUtils.getFileExt(filePath), null,fileCreatedDate);
                     Single.zip(
                             Single.fromCallable(() ->
                                     new FileInputStream(filePath))
@@ -109,11 +116,12 @@ public class UploadModel {
     public void receiveDirect(Uri media, String mimeType, String source, String wikidataEntityIdPref, String title, String desc) {
         currentStepIndex = 0;
         items = new ArrayList<>();
+        long fileCreatedDate = getFileCreatedDate(media);
         String filePath = this.cacheFileUpload(media);
         Uri uri = Uri.fromFile(new File(filePath));
         FileProcessor fp = new FileProcessor(filePath, context.getContentResolver(), context);
         UploadItem item = new UploadItem(uri, mimeType, source, fp.processFileCoordinates(),
-                FileUtils.getFileExt(filePath), wikidataEntityIdPref);
+                FileUtils.getFileExt(filePath), wikidataEntityIdPref,fileCreatedDate);
         item.title.setTitleText(title);
         item.descriptions.get(0).setDescriptionText(desc);
         //TODO figure out if default descriptions in other languages exist
@@ -132,6 +140,33 @@ public class UploadModel {
         items.add(item);
         items.get(0).selected = true;
         items.get(0).first = true;
+    }
+
+    /**
+     * Get file creation date from uri from all possible content providers
+     * @param media
+     * @return
+     */
+    private long getFileCreatedDate(Uri media) {
+        try {
+            Cursor cursor = contentResolver.query(media, null, null, null, null);
+            if (cursor == null) {
+                return -1;//Could not fetch last_modified
+            }
+            //Content provider contracts for opening gallery from the app and that by sharing from gallery from outside are different and we need to handle both the cases
+            int lastModifiedColumnIndex = cursor.getColumnIndex("last_modified");//If gallery is opened from in app
+            if(lastModifiedColumnIndex==-1){
+                lastModifiedColumnIndex=cursor.getColumnIndex("datetaken");
+            }
+            //If both the content providers do not give the data, lets leave it to Jesus
+            if(lastModifiedColumnIndex==-1){
+                return -1l;
+            }
+            cursor.moveToFirst();
+            return cursor.getLong(lastModifiedColumnIndex);
+        } catch (Exception e) {
+            return -1;////Could not fetch last_modified
+        }
     }
 
     public boolean isPreviousAvailable() {
@@ -265,6 +300,10 @@ public class UploadModel {
             contribution.setTag("mimeType", item.mimeType);
             contribution.setSource(item.source);
             contribution.setContentProviderUri(item.mediaUri);
+            if (item.createdTimestamp != -1l) {
+                contribution.setDateCreated(new Date(item.createdTimestamp));
+                //Set the date only if you have it, else the upload service is gonna try it the other way
+            }
             return contribution;
         });
     }
@@ -326,9 +365,10 @@ public class UploadModel {
         public String wikidataEntityId;
         public boolean visited;
         public boolean error;
+        public long createdTimestamp;
 
         @SuppressLint("CheckResult")
-        UploadItem(Uri mediaUri, String mimeType, String source, GPSExtractor gpsCoords, String fileExt, @Nullable String wikidataEntityId) {
+        UploadItem(Uri mediaUri, String mimeType, String source, GPSExtractor gpsCoords, String fileExt, @Nullable String wikidataEntityId, long createdTimestamp) {
             title = new Title();
             descriptions = new ArrayList<>();
             descriptions.add(new Description());
@@ -340,6 +380,7 @@ public class UploadModel {
             this.gpsCoords = gpsCoords;
             this.fileExt = fileExt;
             imageQuality = BehaviorSubject.createDefault(ImageUtils.IMAGE_WAIT);
+            this.createdTimestamp=createdTimestamp;
 //                imageQuality.subscribe(iq->Timber.i("New value of imageQuality:"+ImageUtils.IMAGE_OK));
         }
 
