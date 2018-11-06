@@ -1,6 +1,5 @@
 package fr.free.nrw.commons.upload;
 
-import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -27,7 +26,6 @@ import fr.free.nrw.commons.contributions.Contribution;
 import fr.free.nrw.commons.mwapi.MediaWikiApi;
 import fr.free.nrw.commons.settings.Prefs;
 import fr.free.nrw.commons.utils.ImageUtils;
-import fr.free.nrw.commons.utils.StringUtils;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
