@@ -1,5 +1,7 @@
 package fr.free.nrw.commons.upload;
 
+import java.io.IOException;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -56,12 +58,25 @@ public class ImageProcessingService {
         Single<Integer> wrongGeoLocation = checkImageGeoLocation(uploadItem.getPlace(), filePath);
         Single<Integer> darkImage = checkDarkImage(filePath);
         Single<Integer> itemTitle = checkTitle ? validateItemTitle(uploadItem) : Single.just(ImageUtils.IMAGE_OK);
+        Single<Integer> checkFBMD = checkFBMD(filePath);
 
-        return Single.zip(duplicateImage, wrongGeoLocation, darkImage, itemTitle,
+        Single<Integer> zipResult = Single.zip(duplicateImage, wrongGeoLocation, darkImage, itemTitle,
                 (duplicate, wrongGeo, dark, title) -> {
                     Timber.d("Result for duplicate: %d, geo: %d, dark: %d, title: %d", duplicate, wrongGeo, dark, title);
                     return duplicate | wrongGeo | dark | title;
                 });
+
+        return Single.zip(zipResult, checkFBMD, (zip, fbmd) -> {
+            return zip | fbmd;
+        });
+    }
+
+    public Single<Integer> checkFBMD(String filePath) {
+        try {
+            return ReadFBMD.processMetadata(filePath);
+        } catch (IOException e) {
+            return Single.just(ImageUtils.FILE_FBMD);
+        }
     }
 
     /**

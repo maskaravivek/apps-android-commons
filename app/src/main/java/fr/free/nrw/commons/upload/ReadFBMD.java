@@ -1,5 +1,7 @@
 package fr.free.nrw.commons.upload;
 
+import android.net.Uri;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -21,28 +23,27 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
 import retrofit2.http.Url;
+import timber.log.Timber;
 
 public class ReadFBMD {
-    Url url;
-    ReadFBMD(Url url){
-        this.url=url;
-    }
-    public void processMetadata() throws IOException {
-        Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata((File) url);
+    public static Single<Integer> processMetadata(String filePath) throws IOException {
+        Map<MetadataType, Metadata> metadataMap = Metadata.readMetadata(filePath);
         IPTC iptc = (IPTC)metadataMap.get(MetadataType.IPTC);
+        Timber.d("time_lag_2"+String.valueOf(System.currentTimeMillis()));
 
         if(iptc != null) {
-            Iterator<MetadataEntry> iterator = (Iterator<MetadataEntry>) iptc.getDataSets();
-
-            while(iterator.hasNext()) {
-                MetadataEntry item = iterator.next();
-                printMetadata(item, "", "     ");
+            for (String key: iptc.getDataSets().keySet()){
+                //study the data
             }
         }
+        return Single.just(1);
     }
-    private void printMetadata(MetadataEntry entry, String indent, String increment) {
+    private static void printMetadata(MetadataEntry entry, String indent, String increment) {
         //logger.info(indent + entry.getKey() (StringUtils.isNullOrEmpty(entry.getValue())? "" : ": " + entry.getValue()));
         if(entry.isMetadataEntryGroup()) {
             indent += increment;
