@@ -11,7 +11,11 @@ import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import fr.free.nrw.commons.settings.Prefs;
 import fr.free.nrw.commons.utils.StringUtils;
+
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -44,15 +48,33 @@ public class ContributionDao {
         this.clientProvider = clientProvider;
     }
 
-    Cursor loadAllContributions() {
+    List<Contribution> loadContributions(int offset) {
+        List<Contribution> contributions = new ArrayList<>();
         ContentProviderClient db = clientProvider.get();
         try {
-            return db.query(BASE_URI, ALL_FIELDS, "", null, CONTRIBUTION_SORT);
+            Uri contentUri = BASE_URI.buildUpon()
+                    .appendQueryParameter(ContributionsContentProvider.QUERY_PARAMETER_LIMIT,
+                            String.valueOf(10))
+                    .appendQueryParameter(ContributionsContentProvider.QUERY_PARAMETER_OFFSET,
+                            String.valueOf(offset))
+                    .build();
+            Cursor cursor = db.query(contentUri, ALL_FIELDS, "", null, CONTRIBUTION_SORT);
+            if (cursor == null) {
+                return contributions;
+            }
+            try {
+                while (cursor.moveToNext()) {
+                    contributions.add(fromCursor(cursor));
+                }
+            } finally {
+                cursor.close();
+            }
         } catch (RemoteException e) {
             return null;
         } finally {
             db.release();
         }
+        return contributions;
     }
 
     public void save(Contribution contribution) {

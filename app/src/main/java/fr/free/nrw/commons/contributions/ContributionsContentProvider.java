@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import fr.free.nrw.commons.BuildConfig;
 import fr.free.nrw.commons.data.DBOpenHelper;
 import fr.free.nrw.commons.di.CommonsDaggerContentProvider;
+import fr.free.nrw.commons.utils.StringUtils;
 import timber.log.Timber;
 
 import static android.content.UriMatcher.NO_MATCH;
@@ -26,6 +27,9 @@ public class ContributionsContentProvider extends CommonsDaggerContentProvider {
     private static final int CONTRIBUTIONS_ID = 2;
     private static final String BASE_PATH = "contributions";
     private static final UriMatcher uriMatcher = new UriMatcher(NO_MATCH);
+
+    public static final String QUERY_PARAMETER_LIMIT = "limit";
+    public static final String QUERY_PARAMETER_OFFSET = "offset";
 
     public static final Uri BASE_URI = Uri.parse("content://" + BuildConfig.CONTRIBUTION_AUTHORITY + "/" + BASE_PATH);
 
@@ -54,8 +58,17 @@ public class ContributionsContentProvider extends CommonsDaggerContentProvider {
 
         switch (uriType) {
             case CONTRIBUTIONS:
-                cursor = queryBuilder.query(db, projection, selection, selectionArgs,
-                        null, null, sortOrder);
+                String limit = uri.getQueryParameter(QUERY_PARAMETER_LIMIT);
+                String offset = uri.getQueryParameter(QUERY_PARAMETER_OFFSET);
+
+                if (!StringUtils.isNullOrWhiteSpace(limit) && !StringUtils.isNullOrWhiteSpace(offset)) {
+                    String limitString = offset + "," + limit;
+                    cursor = queryBuilder.query(db, projection, selection, selectionArgs,
+                            null, null, sortOrder, limitString);
+                } else {
+                    cursor = queryBuilder.query(db, projection, selection, selectionArgs,
+                            null, null, sortOrder);
+                }
                 break;
             case CONTRIBUTIONS_ID:
                 cursor = queryBuilder.query(db,

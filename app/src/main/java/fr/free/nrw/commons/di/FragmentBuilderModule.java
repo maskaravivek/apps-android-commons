@@ -6,13 +6,12 @@ import fr.free.nrw.commons.bookmarks.locations.BookmarkLocationsFragment;
 import fr.free.nrw.commons.bookmarks.pictures.BookmarkPicturesFragment;
 import fr.free.nrw.commons.category.CategoryImagesListFragment;
 import fr.free.nrw.commons.category.SubCategoryListFragment;
+import fr.free.nrw.commons.contributions.ContributionListFragment;
 import fr.free.nrw.commons.contributions.ContributionsFragment;
-import fr.free.nrw.commons.contributions.ContributionsListFragment;
 import fr.free.nrw.commons.explore.categories.SearchCategoryFragment;
 import fr.free.nrw.commons.explore.images.SearchImageFragment;
 import fr.free.nrw.commons.explore.recentsearches.RecentSearchesFragment;
 import fr.free.nrw.commons.media.MediaDetailFragment;
-import fr.free.nrw.commons.media.MediaDetailPagerFragment;
 import fr.free.nrw.commons.nearby.NearbyFragment;
 import fr.free.nrw.commons.nearby.NearbyListFragment;
 import fr.free.nrw.commons.nearby.NearbyMapFragment;
@@ -24,13 +23,10 @@ import fr.free.nrw.commons.settings.SettingsFragment;
 public abstract class FragmentBuilderModule {
 
     @ContributesAndroidInjector
-    abstract ContributionsListFragment bindContributionsListFragment();
+    abstract ContributionListFragment bindContributionsListFragment();
 
     @ContributesAndroidInjector
     abstract MediaDetailFragment bindMediaDetailFragment();
-
-    @ContributesAndroidInjector
-    abstract MediaDetailPagerFragment bindMediaDetailPagerFragment();
 
     @ContributesAndroidInjector
     abstract NearbyListFragment bindNearbyListFragment();

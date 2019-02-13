@@ -1,6 +1,5 @@
 package fr.free.nrw.commons.explore;
 
-import android.database.DataSetObserver;
 import android.os.Bundle;
 import com.google.android.material.tabs.TabLayout;
 import androidx.fragment.app.Fragment;
@@ -22,12 +21,12 @@ import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import fr.free.nrw.commons.Media;
 import fr.free.nrw.commons.R;
 import fr.free.nrw.commons.explore.categories.SearchCategoryFragment;
 import fr.free.nrw.commons.explore.images.SearchImageFragment;
 import fr.free.nrw.commons.explore.recentsearches.RecentSearchesFragment;
-import fr.free.nrw.commons.media.MediaDetailPagerFragment;
+import fr.free.nrw.commons.media.MediaSource;
+import fr.free.nrw.commons.media.MediaViewPagerActivity;
 import fr.free.nrw.commons.theme.NavigationBaseActivity;
 import fr.free.nrw.commons.utils.ViewUtil;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -36,7 +35,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
  * Represents search screen of this app
  */
 
-public class SearchActivity extends NavigationBaseActivity implements MediaDetailPagerFragment.MediaDetailProvider{
+public class SearchActivity extends NavigationBaseActivity {
 
     @BindView(R.id.toolbar_search) Toolbar toolbar;
     @BindView(R.id.searchHistoryContainer) FrameLayout searchHistoryContainer;
@@ -49,7 +48,6 @@ public class SearchActivity extends NavigationBaseActivity implements MediaDetai
     private SearchCategoryFragment searchCategoryFragment;
     private RecentSearchesFragment recentSearchesFragment;
     private FragmentManager supportFragmentManager;
-    private MediaDetailPagerFragment mediaDetails;
     ViewPagerAdapter viewPagerAdapter;
     private String query;
 
@@ -124,59 +122,6 @@ public class SearchActivity extends NavigationBaseActivity implements MediaDetai
     }
 
     /**
-     * returns Media Object at position
-     * @param i position of Media in the imagesRecyclerView adapter.
-     */
-    @Override
-    public Media getMediaAtPosition(int i) {
-        return searchImageFragment.getImageAtPosition(i);
-    }
-
-    /**
-     * returns total number of images present in the imagesRecyclerView adapter.
-     */
-    @Override
-    public int getTotalMediaCount() {
-       return searchImageFragment.getTotalImagesCount();
-    }
-
-    /**
-     * This method is never called but it was in MediaDetailProvider Interface
-     * so it needs to be overrided.
-     */
-    @Override
-    public void notifyDatasetChanged() {
-    }
-
-    /**
-     * This method is called on success of API call for image Search.
-     * The viewpager will notified that number of items have changed.
-     */
-    public void viewPagerNotifyDataSetChanged() {
-        if (mediaDetails!=null){
-            mediaDetails.notifyDataSetChanged();
-        }
-    }
-
-    /**
-     * This method is never called but it was in MediaDetailProvider Interface
-     * so it needs to be overrided.
-     */
-    @Override
-    public void registerDataSetObserver(DataSetObserver observer) {
-
-    }
-
-    /**
-     * This method is never called but it was in MediaDetailProvider Interface
-     * so it needs to be overrided.
-     */
-    @Override
-    public void unregisterDataSetObserver(DataSetObserver observer) {
-
-    }
-
-    /**
      * Open media detail pager fragment on click of image in search results
      * @param index item index that should be opened
      */
@@ -187,22 +132,7 @@ public class SearchActivity extends NavigationBaseActivity implements MediaDetai
         viewPager.setVisibility(View.GONE);
         mediaContainer.setVisibility(View.VISIBLE);
         setNavigationBaseToolbarVisibility(true);
-        if (mediaDetails == null || !mediaDetails.isVisible()) {
-            // set isFeaturedImage true for featured images, to include author field on media detail
-            mediaDetails = new MediaDetailPagerFragment(false, true);
-            FragmentManager supportFragmentManager = getSupportFragmentManager();
-            supportFragmentManager
-                    .beginTransaction()
-                    .hide(supportFragmentManager.getFragments().get(supportFragmentManager.getBackStackEntryCount()))
-                    .add(R.id.mediaContainer, mediaDetails)
-                    .addToBackStack(null)
-                    .commit();
-            // Reason for using hide, add instead of replace is to maintain scroll position after
-            // coming back to the search activity. See https://github.com/commons-app/apps-android-commons/issues/1631
-            // https://stackoverflow.com/questions/11353075/how-can-i-maintain-fragment-state-when-added-to-the-back-stack/19022550#19022550
-            supportFragmentManager.executePendingTransactions();
-        }
-        mediaDetails.showImage(index);
+        MediaViewPagerActivity.startYourself(this, MediaSource.SEARCH, index);
         forceInitBackButton();
     }
 
@@ -250,15 +180,5 @@ public class SearchActivity extends NavigationBaseActivity implements MediaDetai
         // Clear focus of searchView now. searchView.clearFocus(); does not seem to work Check the below link for more details.
         // https://stackoverflow.com/questions/6117967/how-to-remove-focus-without-setting-focus-to-another-control/15481511
         viewPager.requestFocus();
-    }
-
-    /**
-     * This method is called when viewPager has reached its end.
-     * Fetches more images using search query and adds it to the recycler view and viewpager adapter
-     */
-    public void requestMoreImages() {
-        if (searchImageFragment!=null){
-            searchImageFragment.addImagesToList(query);
-        }
     }
 }

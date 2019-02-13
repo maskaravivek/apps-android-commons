@@ -68,7 +68,6 @@ public class MediaDetailFragment extends CommonsDaggerSupportFragment {
 
     private boolean editable;
     private boolean isCategoryImage;
-    private MediaDetailPagerFragment.MediaDetailProvider detailProvider;
     private int index;
     private Locale locale;
     private boolean isDeleted = false;
@@ -162,11 +161,6 @@ public class MediaDetailFragment extends CommonsDaggerSupportFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (getParentFragment() != null
-            && getParentFragment() instanceof MediaDetailPagerFragment) {
-            detailProvider =
-                ((MediaDetailPagerFragment) getParentFragment()).getMediaDetailProvider();
-        }
         if (savedInstanceState != null) {
             editable = savedInstanceState.getBoolean("editable");
             isCategoryImage = savedInstanceState.getBoolean("isCategoryImage");
@@ -244,28 +238,16 @@ public class MediaDetailFragment extends CommonsDaggerSupportFragment {
             ((ContributionsFragment) (getParentFragment().getParentFragment())).nearbyNotificationCardView
                 .setVisibility(View.GONE);
         }
-        media = detailProvider.getMediaAtPosition(index);
+        media = getMediaAtPosition(index);
         if (media == null) {
-            // Ask the detail provider to ping us when we're ready
-            Timber.d("MediaDetailFragment not yet ready to display details; registering observer");
-            dataObserver = new DataSetObserver() {
-                @Override
-                public void onChanged() {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    Timber.d("MediaDetailFragment ready to display delayed details!");
-                    detailProvider.unregisterDataSetObserver(dataObserver);
-                    dataObserver = null;
-                    media=detailProvider.getMediaAtPosition(index);
-                    displayMediaDetails();
-                }
-            };
-            detailProvider.registerDataSetObserver(dataObserver);
         } else {
             Timber.d("MediaDetailFragment ready to display details");
             displayMediaDetails();
         }
+    }
+
+    private Media getMediaAtPosition(int index) {
+        return null;
     }
 
     private void displayMediaDetails() {
@@ -334,10 +316,6 @@ public class MediaDetailFragment extends CommonsDaggerSupportFragment {
         if (scrollListener != null && getView() != null) {
             getView().getViewTreeObserver().removeOnScrollChangedListener(scrollListener);
             scrollListener = null;
-        }
-        if (dataObserver != null) {
-            detailProvider.unregisterDataSetObserver(dataObserver);
-            dataObserver = null;
         }
         super.onDestroyView();
     }

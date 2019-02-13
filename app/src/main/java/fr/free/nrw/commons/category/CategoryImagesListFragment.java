@@ -250,21 +250,6 @@ public class CategoryImagesListFragment extends DaggerFragment {
                 return;
             }
             gridAdapter.addItems(collection);
-            try {
-                ((CategoryImagesActivity) getContext()).viewPagerNotifyDataSetChanged();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            try {
-                ((CategoryDetailsActivity) getContext()).viewPagerNotifyDataSetChanged();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            try {
-                ((ExploreActivity) getContext()).viewPagerNotifyDataSetChanged();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
         }
         progressBar.setVisibility(GONE);
         isLoading = false;

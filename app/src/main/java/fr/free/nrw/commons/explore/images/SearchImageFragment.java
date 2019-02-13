@@ -177,7 +177,6 @@ public class SearchImageFragment extends CommonsDaggerSupportFragment {
             queryList.addAll(mediaList);
             imagesAdapter.addAll(mediaList);
             imagesAdapter.notifyDataSetChanged();
-            ((SearchActivity) getContext()).viewPagerNotifyDataSetChanged();
         }
     }
 
@@ -198,7 +197,6 @@ public class SearchImageFragment extends CommonsDaggerSupportFragment {
             progressBar.setVisibility(GONE);
             imagesAdapter.addAll(mediaList);
             imagesAdapter.notifyDataSetChanged();
-            ((SearchActivity)getContext()).viewPagerNotifyDataSetChanged();
         }
     }
 
@@ -230,31 +228,5 @@ public class SearchImageFragment extends CommonsDaggerSupportFragment {
     private void handleNoInternet() {
         progressBar.setVisibility(GONE);
         ViewUtil.showShortSnackbar(imagesRecyclerView, R.string.no_internet);
-    }
-
-    /**
-    * returns total number of images present in the recyclerview adapter.
-    */
-    public int getTotalImagesCount(){
-        if (imagesAdapter == null) {
-            return 0;
-        }
-        else {
-            return imagesAdapter.getItemCount();
-        }
-    }
-
-    /**
-     * returns Media Object at position
-     * @param i position of Media in the recyclerview adapter.
-     */
-    public Media getImageAtPosition(int i) {
-        if (imagesAdapter.getItem(i).getFilename() == null) {
-            // not yet ready to return data
-            return null;
-        }
-        else {
-            return imagesAdapter.getItem(i);
-        }
     }
 }

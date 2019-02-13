@@ -1,20 +1,25 @@
 package fr.free.nrw.commons.contributions;
 
-import android.content.Context;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import javax.annotation.Nullable;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import fr.free.nrw.commons.MediaWikiImageView;
 import fr.free.nrw.commons.R;
-import fr.free.nrw.commons.ViewHolder;
 import fr.free.nrw.commons.contributions.model.DisplayableContribution;
+import fr.free.nrw.commons.di.ApplicationlessInjection;
+import fr.free.nrw.commons.widget.RecyclerItemClickListener;
+import fr.free.nrw.commons.widget.RecyclerViewHolder;
 
-class ContributionViewHolder implements ViewHolder<DisplayableContribution> {
+public class ContributionViewHolder extends
+        RecyclerViewHolder<DisplayableContribution, RecyclerItemClickListener<DisplayableContribution>> {
+
     @BindView(R.id.contributionImage) MediaWikiImageView imageView;
     @BindView(R.id.contributionTitle) TextView titleView;
     @BindView(R.id.contributionState) TextView stateView;
@@ -22,14 +27,24 @@ class ContributionViewHolder implements ViewHolder<DisplayableContribution> {
     @BindView(R.id.contributionProgress) ProgressBar progressView;
     @BindView(R.id.failed_image_options) LinearLayout failedImageOptions;
 
+    private View itemView;
     private DisplayableContribution contribution;
 
     ContributionViewHolder(View parent) {
+        super(parent);
+        this.itemView = parent;
+        ApplicationlessInjection
+                .getInstance(parent.getContext()
+                        .getApplicationContext())
+                .getCommonsApplicationComponent()
+                .inject(this);
+
         ButterKnife.bind(this, parent);
     }
 
     @Override
-    public void bindModel(Context context, DisplayableContribution contribution) {
+    public void onBind(DisplayableContribution contribution,
+                       @Nullable RecyclerItemClickListener<DisplayableContribution> listener) {
         this.contribution = contribution;
         imageView.setMedia(contribution);
         titleView.setText(contribution.getDisplayTitle());
@@ -59,7 +74,7 @@ class ContributionViewHolder implements ViewHolder<DisplayableContribution> {
                 if (transferred == 0 || transferred >= total) {
                     progressView.setIndeterminate(true);
                 } else {
-                    progressView.setProgress((int)(((double)transferred / (double)total) * 100));
+                    progressView.setProgress((int) (((double) transferred / (double) total) * 100));
                 }
                 break;
             case Contribution.STATE_FAILED:
@@ -68,6 +83,10 @@ class ContributionViewHolder implements ViewHolder<DisplayableContribution> {
                 progressView.setVisibility(View.GONE);
                 failedImageOptions.setVisibility(View.VISIBLE);
                 break;
+        }
+
+        if (listener != null) {
+            itemView.setOnClickListener(v -> listener.onItemClicked(contribution));
         }
     }
 

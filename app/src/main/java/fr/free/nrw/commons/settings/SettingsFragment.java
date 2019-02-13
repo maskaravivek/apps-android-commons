@@ -60,41 +60,6 @@ public class SettingsFragment extends PreferenceFragment {
             return true;
         });
 
-        final EditTextPreference uploadLimit = (EditTextPreference) findPreference("uploads");
-        int currentUploadLimit = defaultKvStore.getInt(Prefs.UPLOADS_SHOWING, 100);
-        uploadLimit.setText(Integer.toString(currentUploadLimit));
-        uploadLimit.setSummary(Integer.toString(currentUploadLimit));
-        uploadLimit.getEditText().addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (s.length() == 0) return;
-
-                int value = Integer.parseInt(s.toString());
-
-                if (value > 500) {
-                    uploadLimit.getEditText().setError(getString(R.string.maximum_limit_alert));
-                    value = 500;
-                } else if (value == 0) {
-                    uploadLimit.getEditText().setError(getString(R.string.cannot_be_zero));
-                    value = 100;
-                }
-
-                defaultKvStore.putInt(Prefs.UPLOADS_SHOWING, value);
-                defaultKvStore.putBoolean(Prefs.IS_CONTRIBUTION_COUNT_CHANGED, true);
-                uploadLimit.setText(Integer.toString(value));
-                uploadLimit.setSummary(Integer.toString(value));
-            }
-        });
-
         Preference betaTesterPreference = findPreference("becomeBetaTester");
         betaTesterPreference.setOnPreferenceClickListener(preference -> {
             Utils.handleWebUrl(getActivity(), Uri.parse(getResources().getString(R.string.beta_opt_in_link)));
