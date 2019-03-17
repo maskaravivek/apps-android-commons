@@ -20,6 +20,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.wikipedia.AppAdapter;
+
 import java.util.List;
 
 import javax.inject.Inject;
@@ -28,6 +30,8 @@ import javax.inject.Named;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import fr.free.nrw.commons.BuildConfig;
+import fr.free.nrw.commons.CommonsAppAdapter;
+import fr.free.nrw.commons.CommonsApplication;
 import fr.free.nrw.commons.R;
 import fr.free.nrw.commons.auth.AuthenticatedActivity;
 import fr.free.nrw.commons.auth.SessionManager;
@@ -63,6 +67,9 @@ public class MainActivity extends AuthenticatedActivity implements FragmentManag
     NotificationController notificationController;
     @Inject
     QuizChecker quizChecker;
+
+    @Inject
+    CommonsAppAdapter appAdapter;
 
 
     public Intent uploadServiceIntent;
@@ -502,6 +509,8 @@ public class MainActivity extends AuthenticatedActivity implements FragmentManag
         super.onResume();
         setNotificationCount();
         quizChecker.initQuizCheck(this);
+
+        Timber.d(appAdapter.getUserName());
     }
 
     @Override

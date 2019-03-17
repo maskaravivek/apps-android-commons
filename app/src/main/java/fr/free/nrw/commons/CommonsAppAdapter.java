@@ -7,15 +7,22 @@ import org.wikipedia.dataclient.WikiSite;
 import org.wikipedia.login.LoginResult;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import androidx.annotation.NonNull;
 import fr.free.nrw.commons.auth.SessionManager;
 import okhttp3.OkHttpClient;
 
+@Singleton
 public class CommonsAppAdapter extends AppAdapter {
     private final int DEFAULT_THUMB_SIZE = 640;
 
-    @Inject SessionManager sessionManager;
+    private final SessionManager sessionManager;
+
+    @Inject
+    public CommonsAppAdapter(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
 
     @Override
     public String getMediaWikiBaseUrl() {

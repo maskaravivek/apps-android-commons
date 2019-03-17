@@ -8,7 +8,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Process;
-import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -20,7 +19,6 @@ import com.squareup.leakcanary.RefWatcher;
 import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
-import org.wikipedia.AppAdapter;
 import org.wikipedia.language.AppLanguageLookUpTable;
 
 import java.io.File;
@@ -28,6 +26,7 @@ import java.io.File;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import androidx.annotation.NonNull;
 import fr.free.nrw.commons.auth.SessionManager;
 import fr.free.nrw.commons.bookmarks.locations.BookmarkLocationsDao;
 import fr.free.nrw.commons.bookmarks.pictures.BookmarkPicturesDao;
@@ -99,7 +98,6 @@ public class CommonsApplication extends Application {
     public void onCreate() {
         super.onCreate();
         INSTANCE = this;
-        AppAdapter.set(new CommonsAppAdapter());
         ACRA.init(this);
 
         ApplicationlessInjection
