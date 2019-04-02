@@ -29,11 +29,6 @@ import fr.free.nrw.commons.Utils;
 import fr.free.nrw.commons.bookmarks.Bookmark;
 import fr.free.nrw.commons.bookmarks.pictures.BookmarkPicturesDao;
 import fr.free.nrw.commons.contributions.Contribution;
-import fr.free.nrw.commons.di.CommonsDaggerSupportFragment;
-import fr.free.nrw.commons.explore.SearchActivity;
-import fr.free.nrw.commons.explore.categories.ExploreActivity;
-import fr.free.nrw.commons.kvstore.JsonKvStore;
-import fr.free.nrw.commons.mwapi.MediaWikiApi;
 import fr.free.nrw.commons.di.CommonsDaggerAppCompatActivity;
 import fr.free.nrw.commons.utils.ImageUtils;
 import fr.free.nrw.commons.utils.NetworkUtils;
@@ -164,12 +159,12 @@ public class MediaViewPagerActivity extends CommonsDaggerAppCompatActivity imple
             case R.id.menu_share_current_image:
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_TEXT, m.getDisplayTitle() + " \n" + m.getFilePageTitle().getCanonicalUri());
+                shareIntent.putExtra(Intent.EXTRA_TEXT, m.getDisplayTitle() + " \n" + m.getPageTitle().getCanonicalUri());
                 startActivity(Intent.createChooser(shareIntent, "Share image via..."));
                 return true;
             case R.id.menu_browser_current_image:
                 // View in browser
-                Utils.handleWebUrl(this, m.getFilePageTitle().getMobileUri());
+                Utils.handleWebUrl(this, Uri.parse(m.getPageTitle().getMobileUri()));
 
                 return true;
             case R.id.menu_download_current_image:

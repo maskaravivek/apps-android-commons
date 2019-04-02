@@ -242,13 +242,15 @@
   <string name="upload_image_too_dark">This picture is too dark, are you sure you want to upload it? Wikimedia Commons is only for pictures with encyclopedic value.</string>
   <string name="upload_image_blurry">This picture is blurry, are you sure you want to upload it? Wikimedia Commons is only for pictures with encyclopedic value.</string>
 
-    <string name="upload_problem_exist">Potential problems with this image :</string>
-    <string name="upload_problem_image_dark">Image is too dark.</string>
-    <string name="upload_problem_image_blurry">Image is blurry.</string>
-    <string name="upload_problem_image_duplicate">Image is already on Commons.</string>
-    <string name="upload_problem_different_geolocation">This picture was taken at a different location.</string>
-    <string name="upload_problem_fbmd">Please only upload pictures that you have taken by yourself. Don\'t upload pictures that you have found on other people\'s Facebook accounts.</string>
-    <string name="upload_problem_do_you_continue">Do you still want to upload this picture?</string>
+  <string name="upload_problem_exist">Potential problems with this image :</string>
+  <string name="upload_problem_image_dark">Image is too dark.</string>
+  <string name="upload_problem_image_blurry">Image is blurry.</string>
+  <string name="upload_problem_image_duplicate">Image is already on Commons.</string>
+  <string name="upload_problem_different_geolocation">This picture was taken at a different location.</string>
+  <string name="upload_problem_fbmd">Please only upload pictures that you have taken by yourself. Don\'t upload pictures that you have found on other people\'s Facebook accounts.</string>
+  <string name="upload_problem_do_you_continue">Do you still want to upload this picture?</string>
+  <string name="internet_downloaded">Please only upload pictures that you have taken by yourself. Don\'t upload pictures that you have downloaded from the Internet.</string>
+
 
   <string name="give_permission">Give permission</string>
   <string name="use_external_storage">Use external storage</string>
@@ -445,19 +447,19 @@ Upload your first media by tapping on the add button.</string>
     <string name="yes_submit">Yes, Submit</string>
     <string name="no_go_back">No, Go Back</string>
 
-    <string name="upload_flow_all_images_in_set">(For all images in set)</string>
-    <string name="search_this_area">Search this area</string>
-    <string name="nearby_card_permission_title">Permission Request</string>
-    <string name="nearby_card_permission_explanation">Would you like us to use your current location to display the nearest place that needs pictures?</string>
-    <string name="unable_to_display_nearest_place">Unable to display nearest place that needs pictures without location permissions</string>
-    <string name="never_ask_again">Never ask this again</string>
-    <string name="display_location_permission_title">Display location permission</string>
-    <string name="display_location_permission_explanation">Ask for location permission when needed for nearby notification card view feature.</string>
-    <string name="achievements_fetch_failed">Something went wrong, We could not fetch your achievements</string>
-    <string name="ends_on">Ends on:</string>
-    <string name="display_campaigns">Display campaigns</string>
-    <string name="display_campaigns_explanation">Tap here to see the ongoing campaigns</string>
-    <string name="nearby_campaign_dismiss_message">You won\'t see the campaigns anymore. However, you can re-enable this notification in Settings if you wish.</string>
+  <string name="upload_flow_all_images_in_set">(For all images in set)</string>
+  <string name="search_this_area">Search this area</string>
+  <string name="nearby_card_permission_title">Permission Request</string>
+  <string name="nearby_card_permission_explanation">Would you like us to use your current location to display the nearest place that needs pictures?</string>
+  <string name="unable_to_display_nearest_place">Unable to display nearest place that needs pictures without location permissions</string>
+  <string name="never_ask_again">Never ask this again</string>
+  <string name="display_location_permission_title">Display location permission</string>
+  <string name="display_location_permission_explanation">Ask for location permission when needed for nearby notification card view feature.</string>
+  <string name="achievements_fetch_failed">Something went wrong, We could not fetch your achievements</string>
+  <string name="ends_on">Ends on:</string>
+  <string name="display_campaigns">Display campaigns</string>
+  <string name="display_campaigns_explanation">See the ongoing campaigns</string>
+  <string name="nearby_campaign_dismiss_message">You won\'t see the campaigns anymore. However, you can re-enable this notification in Settings if you wish.</string>
 
     <string name="this_function_needs_network_connection">This function requires network connection, please check your connection settings.</string>
     <string name="bad_token_error_proposed_solution">Upload failed due to issues with edit token. Please try logging out and in again. </string>
@@ -506,6 +508,8 @@ Upload your first media by tapping on the add button.</string>
     <string name="review_copyright_no_button_text">SEEMS FINE</string>
     <string name="review_thanks_yes_button_text">YES, WHY NOT</string>
     <string name="review_thanks_no_button_text">NEXT IMAGE</string>
+    <string name="skip_image_explanation">Clicking this button will give you another recently uploaded image from Wikimedia Commons</string>
+    <string name="review_image_explanation">You can review images and improve the quality of Wikimedia Commoms.\n The four parameters of review are: \n - Is this image in-scope? \n - Does this image follow the rules of copyright? \n - Is this image correctly categorized? \n - If all goes well you can also thank the contributor.</string>
 
     <plurals name="receiving_shared_content">
         <item quantity="one">Receiving shared content. Processing the image might take some time depending on the size of the image and your device</item>
@@ -529,4 +533,5 @@ Upload your first media by tapping on the add button.</string>
   <string name="images_featured_explanation">Featured pictures are images from highly skilled photographers and illustrators that the Wikimedia Commons community has chosen as some of the highest quality on the site.</string>
   <string name="images_via_nearby_explanation">Images Uploaded via Nearby places are the images which are uploaded by discovering places on the map.</string>
   <string name="thanks_received_explanation" >This feature allows editors to send a Thank you notification to users who make useful edits – by using a small thank link on the history page or diff page.</string>
+  <string name="skip_image">SKIP THIS IMAGE</string>
 </resources>

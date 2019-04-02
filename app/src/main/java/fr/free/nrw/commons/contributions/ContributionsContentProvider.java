@@ -6,15 +6,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
 import fr.free.nrw.commons.BuildConfig;
 import fr.free.nrw.commons.data.DBOpenHelper;
 import fr.free.nrw.commons.di.CommonsDaggerContentProvider;
-import fr.free.nrw.commons.utils.StringUtils;
 import timber.log.Timber;
 
 import static android.content.UriMatcher.NO_MATCH;
@@ -61,7 +62,7 @@ public class ContributionsContentProvider extends CommonsDaggerContentProvider {
                 String limit = uri.getQueryParameter(QUERY_PARAMETER_LIMIT);
                 String offset = uri.getQueryParameter(QUERY_PARAMETER_OFFSET);
 
-                if (!StringUtils.isNullOrWhiteSpace(limit) && !StringUtils.isNullOrWhiteSpace(offset)) {
+                if (!StringUtils.isBlank(limit) && !StringUtils.isBlank(offset)) {
                     String limitString = offset + "," + limit;
                     cursor = queryBuilder.query(db, projection, selection, selectionArgs,
                             null, null, sortOrder, limitString);
