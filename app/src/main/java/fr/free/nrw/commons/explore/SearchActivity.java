@@ -1,26 +1,21 @@
 package fr.free.nrw.commons.explore;
 
 import android.os.Bundle;
-import com.google.android.material.tabs.TabLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.viewpager.widget.ViewPager;
-import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.SearchView;
-
-import com.jakewharton.rxbinding2.view.RxView;
-import com.jakewharton.rxbinding2.widget.RxSearchView;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager.widget.ViewPager;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import com.google.android.material.tabs.TabLayout;
+import com.jakewharton.rxbinding2.view.RxView;
+import com.jakewharton.rxbinding2.widget.RxSearchView;
+import fr.free.nrw.commons.Media;
 import fr.free.nrw.commons.R;
 import fr.free.nrw.commons.explore.categories.SearchCategoryFragment;
 import fr.free.nrw.commons.explore.images.SearchImageFragment;
@@ -28,8 +23,12 @@ import fr.free.nrw.commons.explore.recentsearches.RecentSearchesFragment;
 import fr.free.nrw.commons.media.MediaSource;
 import fr.free.nrw.commons.media.MediaViewPagerActivity;
 import fr.free.nrw.commons.theme.NavigationBaseActivity;
+import fr.free.nrw.commons.utils.FragmentUtils;
 import fr.free.nrw.commons.utils.ViewUtil;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents search screen of this app
@@ -107,8 +106,13 @@ public class SearchActivity extends NavigationBaseActivity {
                                 viewPager.setVisibility(View.VISIBLE);
                                 tabLayout.setVisibility(View.VISIBLE);
                                 searchHistoryContainer.setVisibility(View.GONE);
-                                searchImageFragment.updateImageList(query.toString());
-                                searchCategoryFragment.updateCategoryList(query.toString());
+                                if (FragmentUtils.isFragmentUIActive(searchImageFragment)) {
+                                    searchImageFragment.updateImageList(query.toString());
+                                }
+
+                                if (FragmentUtils.isFragmentUIActive(searchCategoryFragment)) {
+                                    searchCategoryFragment.updateCategoryList(query.toString());
+                                }
                             }else {
                                 //Open RecentSearchesFragment
                                 recentSearchesFragment.updateRecentSearches();
@@ -180,5 +184,21 @@ public class SearchActivity extends NavigationBaseActivity {
         // Clear focus of searchView now. searchView.clearFocus(); does not seem to work Check the below link for more details.
         // https://stackoverflow.com/questions/6117967/how-to-remove-focus-without-setting-focus-to-another-control/15481511
         viewPager.requestFocus();
+    }
+
+    /**
+     * This method is called when viewPager has reached its end.
+     * Fetches more images using search query and adds it to the recycler view and viewpager adapter
+     */
+    public void requestMoreImages() {
+        if (searchImageFragment!=null){
+            searchImageFragment.addImagesToList(query);
+        }
+    }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        //Dispose the disposables when the activity is destroyed
+        compositeDisposable.dispose();
     }
 }

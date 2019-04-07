@@ -1,6 +1,5 @@
 package fr.free.nrw.commons.explore.images;
 
-
 import android.annotation.SuppressLint;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -226,7 +225,45 @@ public class SearchImageFragment extends CommonsDaggerSupportFragment {
      * Handles the UI updates for no internet scenario
      */
     private void handleNoInternet() {
-        progressBar.setVisibility(GONE);
-        ViewUtil.showShortSnackbar(imagesRecyclerView, R.string.no_internet);
+        if (null
+            != getView()) {//We have exposed public methods to update our ui, we will have to add null checks until we make this lifecycle aware
+            if (null != progressBar) {
+                progressBar.setVisibility(GONE);
+            }
+            ViewUtil.showShortSnackbar(imagesRecyclerView, R.string.no_internet);
+        } else {
+            Timber.d("Attempt to update fragment ui after its view was destroyed");
+        }
+    }
+
+    /**
+    * returns total number of images present in the recyclerview adapter.
+    */
+    public int getTotalImagesCount(){
+        if (imagesAdapter == null) {
+            return 0;
+        }
+        else {
+            return imagesAdapter.getItemCount();
+        }
+    }
+
+    /**
+     * returns Media Object at position
+     * @param i position of Media in the recyclerview adapter.
+     */
+    public Media getImageAtPosition(int i) {
+        if (imagesAdapter.getItem(i).getFilename() == null) {
+            // not yet ready to return data
+            return null;
+        }
+        else {
+            return imagesAdapter.getItem(i);
+        }
+    }
+
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        compositeDisposable.clear();
     }
 }
