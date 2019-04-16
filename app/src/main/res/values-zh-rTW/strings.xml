@@ -88,11 +88,9 @@
   </plurals>
   <plurals name="starting_multiple_uploads">
     <item quantity="one">開始 %1$d 次上傳</item>
-    <item quantity="other">開始 %1$d 次上傳</item>
   </plurals>
   <plurals name="multiple_uploads_title">
     <item quantity="one">%1$d 次上傳</item>
-    <item quantity="other">%1$d 次上傳</item>
   </plurals>
   <string name="categories_not_found">沒有發現與 %1$s 相符的分類</string>
   <string name="categories_skip_explanation">為您的圖片添加分類，使別人在維基共享資源更容易找到。\n\n開始輸入以添加分類。</string>
@@ -454,8 +452,8 @@
   <string name="check_category_adding_template">添加用於分類檢查的模板</string>
   <string name="check_category_notification_title">請求%1$s的分類檢查</string>
   <string name="check_category_edit_summary">請求分類檢查</string>
-  <string name="check_category_success_title">請求分類檢查：成功</string>
-  <string name="check_category_failure_title">請求分類檢查：失敗</string>
+  <string name="check_category_success_title" fuzzy="true">請求分類檢查：成功</string>
+  <string name="check_category_failure_title" fuzzy="true">請求分類檢查：失敗</string>
   <string name="check_category_success_message">成功請求%1$s的分類檢查</string>
   <string name="check_category_failure_message">無法請求%1$s的分類檢查</string>
   <string name="check_category_toast">請求%1$s的分類檢查</string>
