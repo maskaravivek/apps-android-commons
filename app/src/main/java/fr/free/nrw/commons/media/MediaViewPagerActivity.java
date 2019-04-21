@@ -23,6 +23,7 @@ import fr.free.nrw.commons.Media;
 import fr.free.nrw.commons.R;
 import fr.free.nrw.commons.Utils;
 import fr.free.nrw.commons.bookmarks.Bookmark;
+import fr.free.nrw.commons.bookmarks.pictures.BookmarkPicturesContentProvider;
 import fr.free.nrw.commons.bookmarks.pictures.BookmarkPicturesDao;
 import fr.free.nrw.commons.contributions.Contribution;
 import fr.free.nrw.commons.di.CommonsDaggerAppCompatActivity;
@@ -113,7 +114,8 @@ public class MediaViewPagerActivity extends CommonsDaggerAppCompatActivity imple
                     // Initialize bookmark object
                     bookmark = new Bookmark(
                             m.getFilename(),
-                            m.getCreator()
+                            m.getCreator(),
+                            BookmarkPicturesContentProvider.uriForName(m.getFilename())
                     );
                     updateBookmarkState(menu.findItem(R.id.menu_bookmark_current_image));
 
