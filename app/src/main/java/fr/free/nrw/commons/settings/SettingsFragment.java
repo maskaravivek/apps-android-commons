@@ -7,8 +7,6 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
-import android.text.Editable;
-import android.text.TextWatcher;
 
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
@@ -76,7 +74,6 @@ public class SettingsFragment extends PreferenceFragment {
             SwitchPreference displayLocationPermissionForCardView = (SwitchPreference) findPreference("displayLocationPermissionForCardView");
             SwitchPreference displayCampaignsCardView = (SwitchPreference) findPreference("displayCampaignsCardView");
             useExternalStorage.setEnabled(false);
-            uploadLimit.setEnabled(false);
             useAuthorName.setEnabled(false);
             displayNearbyCardView.setEnabled(false);
             displayLocationPermissionForCardView.setEnabled(false);

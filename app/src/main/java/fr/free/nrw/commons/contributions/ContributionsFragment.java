@@ -116,7 +116,7 @@ public class ContributionsFragment
         presenter.onAttachView(this);
         campaignView.setVisibility(View.GONE);
         checkBoxView = View.inflate(getActivity(), R.layout.nearby_permission_dialog, null);
-        checkBox = (CheckBox) checkBoxView.findViewById(R.id.never_ask_again);
+        checkBox = checkBoxView.findViewById(R.id.never_ask_again);
         checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 // Do not ask for permission on activity start again
@@ -256,17 +256,12 @@ public class ContributionsFragment
     }
 
     private void displayUploadCount(Integer uploadCount) {
-        if (getActivity().isFinishing()
-                || getResources() == null) {
+        if (getActivity().isFinishing()) {
             return;
         }
 
         ((MainActivity)getActivity()).setNumOfUploads(uploadCount);
 
-    }
-
-    public void betaSetUploadCount(int betaUploadCount) {
-        displayUploadCount(betaUploadCount);
     }
 
     @Override
