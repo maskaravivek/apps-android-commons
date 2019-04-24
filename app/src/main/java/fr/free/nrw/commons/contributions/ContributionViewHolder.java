@@ -5,34 +5,45 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.facebook.drawee.view.SimpleDraweeView;
+
+import javax.inject.Inject;
+
 import javax.annotation.Nullable;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import fr.free.nrw.commons.MediaWikiImageView;
+import fr.free.nrw.commons.MediaDataExtractor;
 import fr.free.nrw.commons.R;
 import fr.free.nrw.commons.contributions.model.DisplayableContribution;
 import fr.free.nrw.commons.di.ApplicationlessInjection;
 import fr.free.nrw.commons.widget.RecyclerItemClickListener;
 import fr.free.nrw.commons.widget.RecyclerViewHolder;
+import fr.free.nrw.commons.di.ApplicationlessInjection;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
 public class ContributionViewHolder extends
         RecyclerViewHolder<DisplayableContribution, RecyclerItemClickListener<DisplayableContribution>> {
-
-    @BindView(R.id.contributionImage) MediaWikiImageView imageView;
+    @BindView(R.id.contributionImage)
+    SimpleDraweeView imageView;
     @BindView(R.id.contributionTitle) TextView titleView;
     @BindView(R.id.contributionState) TextView stateView;
     @BindView(R.id.contributionSequenceNumber) TextView seqNumView;
     @BindView(R.id.contributionProgress) ProgressBar progressView;
     @BindView(R.id.failed_image_options) LinearLayout failedImageOptions;
 
-    private View itemView;
+    @Inject
+    MediaDataExtractor mediaDataExtractor;
+
     private DisplayableContribution contribution;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     ContributionViewHolder(View parent) {
         super(parent);
-        this.itemView = parent;
         ApplicationlessInjection
                 .getInstance(parent.getContext()
                         .getApplicationContext())
@@ -45,8 +56,10 @@ public class ContributionViewHolder extends
     @Override
     public void onBind(DisplayableContribution contribution,
                        @Nullable RecyclerItemClickListener<DisplayableContribution> listener) {
+        ApplicationlessInjection.getInstance(itemView.getContext())
+                .getCommonsApplicationComponent().inject(this);
         this.contribution = contribution;
-        imageView.setMedia(contribution);
+        fetchAndDisplayThumbnail(contribution);
         titleView.setText(contribution.getDisplayTitle());
 
         seqNumView.setText(String.valueOf(contribution.getPosition() + 1));
@@ -88,6 +101,26 @@ public class ContributionViewHolder extends
         if (listener != null) {
             itemView.setOnClickListener(v -> listener.onItemClicked(contribution));
         }
+    }
+
+    /**
+     * This method fetches the thumbnail url from file name
+     * This can be removed once #2904 is in place and contribution contains all metadata beforehand
+     * @param contribution
+     */
+    private void fetchAndDisplayThumbnail(DisplayableContribution contribution) {
+        Timber.d("Fetching thumbnail for %s", contribution.getFilename());
+        Disposable disposable = mediaDataExtractor.getMediaFromFileName(contribution.getFilename())
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(media -> {
+                    imageView.setImageURI(media.getThumbUrl());
+                });
+        compositeDisposable.add(disposable);
+    }
+
+    public void clear() {
+        compositeDisposable.clear();
     }
 
     /**
