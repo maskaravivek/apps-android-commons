@@ -5,11 +5,15 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.collection.LruCache;
+
 import com.facebook.drawee.view.SimpleDraweeView;
 
-import javax.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -20,7 +24,7 @@ import fr.free.nrw.commons.contributions.model.DisplayableContribution;
 import fr.free.nrw.commons.di.ApplicationlessInjection;
 import fr.free.nrw.commons.widget.RecyclerItemClickListener;
 import fr.free.nrw.commons.widget.RecyclerViewHolder;
-import fr.free.nrw.commons.di.ApplicationlessInjection;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -38,6 +42,10 @@ public class ContributionViewHolder extends
 
     @Inject
     MediaDataExtractor mediaDataExtractor;
+
+    @Inject
+    @Named("thumbnail-cache")
+    LruCache<String, String> thumbnailCache;
 
     private DisplayableContribution contribution;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -105,15 +113,21 @@ public class ContributionViewHolder extends
 
     /**
      * This method fetches the thumbnail url from file name
+     * If the thumbnail url is present in cache, then it is used otherwise API call is made to fetch the thumbnail
      * This can be removed once #2904 is in place and contribution contains all metadata beforehand
      * @param contribution
      */
     private void fetchAndDisplayThumbnail(DisplayableContribution contribution) {
+        if (!StringUtils.isBlank(thumbnailCache.get(contribution.getFilename()))) {
+            imageView.setImageURI(thumbnailCache.get(contribution.getFilename()));
+            return;
+        }
         Timber.d("Fetching thumbnail for %s", contribution.getFilename());
         Disposable disposable = mediaDataExtractor.getMediaFromFileName(contribution.getFilename())
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(media -> {
+                    thumbnailCache.put(contribution.getFilename(), media.getThumbUrl());
                     imageView.setImageURI(media.getThumbUrl());
                 });
         compositeDisposable.add(disposable);

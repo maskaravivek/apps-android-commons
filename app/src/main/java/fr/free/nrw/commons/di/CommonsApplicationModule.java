@@ -152,6 +152,7 @@ public class CommonsApplicationModule {
 
     @Provides
     @Singleton
+    @Named("thumbnail-cache")
     public LruCache<String, String> provideLruCache() {
         return new LruCache<>(1024);
     }
