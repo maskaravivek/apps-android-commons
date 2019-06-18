@@ -2,22 +2,26 @@ package fr.free.nrw.commons.di;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
 
 import org.wikipedia.dataclient.ServiceFactory;
 import org.wikipedia.dataclient.WikiSite;
+import org.wikipedia.dataclient.okhttp.HttpStatusException;
 import org.wikipedia.json.GsonUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import androidx.annotation.NonNull;
 import dagger.Module;
 import dagger.Provides;
 import fr.free.nrw.commons.BuildConfig;
+import fr.free.nrw.commons.CommonsApplication;
 import fr.free.nrw.commons.kvstore.JsonKvStore;
 import fr.free.nrw.commons.mwapi.ApacheHttpClientMediaWikiApi;
 import fr.free.nrw.commons.mwapi.MediaWikiApi;
@@ -25,7 +29,10 @@ import fr.free.nrw.commons.mwapi.OkHttpJsonApiClient;
 import fr.free.nrw.commons.review.ReviewInterface;
 import okhttp3.Cache;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import timber.log.Timber;
 
@@ -37,19 +44,25 @@ public class NetworkingModule {
 
     private static final String TEST_TOOLS_FORGE_URL = "https://tools.wmflabs.org/commons-android-app/tool-commons-android-app";
 
-    public static final long OK_HTTP_CACHE_SIZE = 10 * 1024 * 1024;
+    private static final String CACHE_DIR_NAME = "okhttp-cache";
+    private static final long NET_CACHE_SIZE = 64 * 1024 * 1024;
+    @NonNull
+    private static final Cache NET_CACHE = new Cache(new File(CommonsApplication.getInstance().getCacheDir(),
+            CACHE_DIR_NAME), NET_CACHE_SIZE);
 
     @Provides
     @Singleton
     public OkHttpClient provideOkHttpClient(Context context,
                                             HttpLoggingInterceptor httpLoggingInterceptor) {
-        File dir = new File(context.getCacheDir(), "okHttpCache");
-        return new OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+        return new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .cache(NET_CACHE)
                 .addInterceptor(httpLoggingInterceptor)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .cache(new Cache(dir, OK_HTTP_CACHE_SIZE))
-            .build();
+                .addInterceptor(new UnsuccessfulResponseInterceptor())
+                .addInterceptor(new CommonHeaderRequestInterceptor())
+                .build();
     }
 
     @Provides
@@ -60,6 +73,29 @@ public class NetworkingModule {
         });
         httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         return httpLoggingInterceptor;
+    }
+
+    private static class CommonHeaderRequestInterceptor implements Interceptor {
+        @Override
+        @NonNull
+        public Response intercept(@NonNull Chain chain) throws IOException {
+            Request request = chain.request().newBuilder()
+                    .header("User-Agent", CommonsApplication.getInstance().getUserAgent())
+                    .build();
+            return chain.proceed(request);
+        }
+    }
+
+    public static class UnsuccessfulResponseInterceptor implements Interceptor {
+        @Override
+        @NonNull
+        public Response intercept(@NonNull Chain chain) throws IOException {
+            Response rsp = chain.proceed(chain.request());
+            if (rsp.isSuccessful()) {
+                return rsp;
+            }
+            throw new HttpStatusException(rsp);
+        }
     }
 
     @Provides

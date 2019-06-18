@@ -1,5 +1,7 @@
 package fr.free.nrw.commons;
 
+import androidx.annotation.NonNull;
+
 import org.wikipedia.AppAdapter;
 import org.wikipedia.dataclient.SharedPreferenceCookieManager;
 import org.wikipedia.dataclient.WikiSite;
@@ -7,7 +9,6 @@ import org.wikipedia.json.GsonMarshaller;
 import org.wikipedia.json.GsonUnmarshaller;
 import org.wikipedia.login.LoginResult;
 
-import androidx.annotation.NonNull;
 import fr.free.nrw.commons.auth.SessionManager;
 import fr.free.nrw.commons.kvstore.JsonKvStore;
 import okhttp3.OkHttpClient;
@@ -18,10 +19,14 @@ public class CommonsAppAdapter extends AppAdapter {
 
     private final SessionManager sessionManager;
     private final JsonKvStore preferences;
+    private final OkHttpClient okHttpClient;
 
-    CommonsAppAdapter(@NonNull SessionManager sessionManager, @NonNull JsonKvStore preferences) {
+    CommonsAppAdapter(@NonNull SessionManager sessionManager,
+                      @NonNull JsonKvStore preferences,
+                      OkHttpClient okHttpClient) {
         this.sessionManager = sessionManager;
         this.preferences = preferences;
+        this.okHttpClient = okHttpClient;
     }
 
     @Override
@@ -36,7 +41,7 @@ public class CommonsAppAdapter extends AppAdapter {
 
     @Override
     public OkHttpClient getOkHttpClient(@NonNull WikiSite wikiSite) {
-        return OkHttpConnectionFactory.getClient();
+        return okHttpClient;
     }
 
     @Override

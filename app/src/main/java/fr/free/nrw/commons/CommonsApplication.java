@@ -127,7 +127,7 @@ public class CommonsApplication extends Application {
                 .getCommonsApplicationComponent()
                 .inject(this);
 
-        AppAdapter.set(new CommonsAppAdapter(sessionManager, defaultPrefs));
+        AppAdapter.set(new CommonsAppAdapter(sessionManager, defaultPrefs, okHttpClient));
 
         initTimber();
 
