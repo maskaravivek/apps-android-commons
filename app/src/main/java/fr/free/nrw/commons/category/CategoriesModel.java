@@ -25,6 +25,7 @@ public class CategoriesModel{
     private final MediaWikiApi mwApi;
     private final CategoryDao categoryDao;
     private final JsonKvStore directKvStore;
+    private final CategoryClient categoryClient;
 
     private HashMap<String, ArrayList<String>> categoriesCache;
     private List<CategoryItem> selectedCategories;
@@ -33,10 +34,12 @@ public class CategoriesModel{
     @Inject
     public CategoriesModel(MediaWikiApi mwApi,
                            CategoryDao categoryDao,
-                           @Named("default_preferences") JsonKvStore directKvStore) {
+                           @Named("default_preferences") JsonKvStore directKvStore,
+                           CategoryClient categoryClient) {
         this.mwApi = mwApi;
         this.categoryDao = categoryDao;
         this.directKvStore = directKvStore;
+        this.categoryClient = categoryClient;
         this.categoriesCache = new HashMap<>();
         this.selectedCategories = new ArrayList<>();
     }
