@@ -48,7 +48,7 @@ public class ImageProcessingService {
      * - checks geolocation for image
      * - check for valid title
      */
-    Single<Integer> validateImage(UploadModel.UploadItem uploadItem, boolean checkTitle) {
+    public Single<Integer> validateImage(UploadModel.UploadItem uploadItem, boolean checkTitle) {
         int currentImageQuality = uploadItem.getImageQuality();
         Timber.d("Current image quality is %d", currentImageQuality);
         if (currentImageQuality == ImageUtils.IMAGE_KEEP) {

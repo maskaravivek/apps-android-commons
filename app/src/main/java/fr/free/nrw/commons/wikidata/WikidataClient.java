@@ -28,7 +28,7 @@ public class WikidataClient {
      * @param value value of the P18 edit
      * @return revisionID of the edit
      */
-    Observable<Long> createClaim(String entityId, String value) {
+    public Observable<Long> createClaim(String entityId, String value) {
         return getCsrfToken()
                 .flatMap(csrfToken -> wikidataInterface.postCreateClaim(toRequestBody(entityId),
                         toRequestBody("value"),
