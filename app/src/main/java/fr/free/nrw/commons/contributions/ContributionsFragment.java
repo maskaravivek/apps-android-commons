@@ -1,5 +1,9 @@
 package fr.free.nrw.commons.contributions;
 
+import static fr.free.nrw.commons.contributions.Contribution.STATE_FAILED;
+import static fr.free.nrw.commons.contributions.MainActivity.CONTRIBUTIONS_TAB_POSITION;
+import static fr.free.nrw.commons.utils.LengthUtils.formatDistanceBetween;
+
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,21 +16,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentManager.OnBackStackChangedListener;
 import androidx.fragment.app.FragmentTransaction;
-
-import fr.free.nrw.commons.MediaDataExtractor;
-import io.reactivex.disposables.Disposable;
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import fr.free.nrw.commons.HandlerService;
@@ -36,7 +30,7 @@ import fr.free.nrw.commons.campaigns.Campaign;
 import fr.free.nrw.commons.campaigns.CampaignView;
 import fr.free.nrw.commons.campaigns.CampaignsPresenter;
 import fr.free.nrw.commons.campaigns.ICampaignsView;
-import fr.free.nrw.commons.contributions.ContributionsListAdapter.Callback;
+import fr.free.nrw.commons.contributions.ContributionsListFragment.Callback;
 import fr.free.nrw.commons.contributions.ContributionsListFragment.SourceRefresher;
 import fr.free.nrw.commons.di.CommonsDaggerSupportFragment;
 import fr.free.nrw.commons.kvstore.JsonKvStore;
@@ -60,20 +54,18 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+import javax.inject.Inject;
+import javax.inject.Named;
 import timber.log.Timber;
-
-import static fr.free.nrw.commons.contributions.Contribution.STATE_FAILED;
-import static fr.free.nrw.commons.contributions.MainActivity.CONTRIBUTIONS_TAB_POSITION;
-import static fr.free.nrw.commons.utils.LengthUtils.formatDistanceBetween;
 
 public class ContributionsFragment
         extends CommonsDaggerSupportFragment
         implements
-        MediaDetailProvider,
         OnBackStackChangedListener,
         SourceRefresher,
         LocationUpdateListener,
-        ICampaignsView, ContributionsContract.View {
+    MediaDetailProvider,
+    ICampaignsView, ContributionsContract.View, Callback {
     @Inject @Named("default_preferences") JsonKvStore store;
     @Inject NearbyController nearbyController;
     @Inject OkHttpJsonApiClient okHttpJsonApiClient;
@@ -85,8 +77,8 @@ public class ContributionsFragment
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private ContributionsListFragment contributionsListFragment;
-    private MediaDetailPagerFragment mediaDetailPagerFragment;
     private static final String CONTRIBUTION_LIST_FRAGMENT_TAG = "ContributionListFragmentTag";
+    private MediaDetailPagerFragment mediaDetailPagerFragment;
     static final String MEDIA_DETAIL_PAGER_FRAGMENT_TAG = "MediaDetailFragmentTag";
 
     @BindView(R.id.card_view_nearby) public NearbyNotificationCardView nearbyNotificationCardView;
@@ -120,7 +112,6 @@ public class ContributionsFragment
         }
     };
     private boolean shouldShowMediaDetailsFragment;
-    private int numberOfContributions;
     private boolean isAuthCookieAcquired;
 
     @Override
@@ -135,7 +126,6 @@ public class ContributionsFragment
         ButterKnife.bind(this, view);
         presenter.onAttachView(this);
         contributionsPresenter.onAttachView(this);
-        contributionsPresenter.setLifeCycleOwner(this.getViewLifecycleOwner());
         campaignView.setVisibility(View.GONE);
         checkBoxView = View.inflate(getActivity(), R.layout.nearby_permission_dialog, null);
         checkBox = (CheckBox) checkBoxView.findViewById(R.id.never_ask_again);
@@ -148,101 +138,19 @@ public class ContributionsFragment
 
         if (savedInstanceState != null) {
             mediaDetailPagerFragment = (MediaDetailPagerFragment) getChildFragmentManager()
-                    .findFragmentByTag(MEDIA_DETAIL_PAGER_FRAGMENT_TAG);
+                .findFragmentByTag(MEDIA_DETAIL_PAGER_FRAGMENT_TAG);
             contributionsListFragment = (ContributionsListFragment) getChildFragmentManager()
-                    .findFragmentByTag(CONTRIBUTION_LIST_FRAGMENT_TAG);
+                .findFragmentByTag(CONTRIBUTION_LIST_FRAGMENT_TAG);
             shouldShowMediaDetailsFragment = savedInstanceState.getBoolean("mediaDetailsVisible");
         }
 
         initFragments();
 
-        if(shouldShowMediaDetailsFragment){
-            showMediaDetailPagerFragment();
-        }else{
-            showContributionsListFragment();
-        }
-
         if (!ConfigUtils.isBetaFlavour()) {
             setUploadCount();
         }
 
-        getChildFragmentManager().registerFragmentLifecycleCallbacks(
-            new FragmentManager.FragmentLifecycleCallbacks() {
-                @Override public void onFragmentResumed(FragmentManager fm, Fragment f) {
-                    super.onFragmentResumed(fm, f);
-                    //If media detail pager fragment is visible, hide the campaigns view [might not be the best way to do, this but yeah, this proves to work for now]
-                    Timber.e("onFragmentResumed %s", f.getClass().getName());
-                    if (f instanceof MediaDetailPagerFragment) {
-                        campaignView.setVisibility(View.GONE);
-                    }
-                }
-
-                @Override public void onFragmentDetached(FragmentManager fm, Fragment f) {
-                    super.onFragmentDetached(fm, f);
-                    Timber.e("onFragmentDetached %s", f.getClass().getName());
-                    //If media detail pager fragment is detached, ContributionsList fragment is gonna be visible, [becomes tightly coupled though]
-                    if (f instanceof MediaDetailPagerFragment) {
-                        fetchCampaigns();
-                    }
-                }
-            }, true);
-
         return view;
-    }
-
-    /**
-     * Initialose the ContributionsListFragment and MediaDetailPagerFragment fragment
-     */
-    private void initFragments() {
-        if (null == contributionsListFragment) {
-            contributionsListFragment = new ContributionsListFragment();
-        }
-
-        contributionsListFragment.setCallback(new Callback() {
-            @Override
-            public void retryUpload(Contribution contribution) {
-                ContributionsFragment.this.retryUpload(contribution);
-            }
-
-            @Override
-            public void deleteUpload(Contribution contribution) {
-                contributionsPresenter.deleteUpload(contribution);
-            }
-
-            @Override
-            public void openMediaDetail(int position) {
-                showDetail(position);
-            }
-
-            @Override
-            public Contribution getContributionForPosition(int position) {
-                return (Contribution) contributionsPresenter.getItemAtPosition(position);
-            }
-
-            @Override
-            public void fetchMediaUriFor(Contribution contribution) {
-                Timber.d("Fetching thumbnail for %s", contribution.filename);
-                contributionsPresenter.fetchMediaDetails(contribution);
-            }
-        });
-
-        if(null==mediaDetailPagerFragment){
-            mediaDetailPagerFragment=new MediaDetailPagerFragment();
-        }
-    }
-
-
-    /**
-     * Replaces the root frame layout with the given fragment
-     * @param fragment
-     * @param tag
-     */
-    private void showFragment(Fragment fragment, String tag) {
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.replace(R.id.root_frame, fragment, tag);
-        transaction.addToBackStack(CONTRIBUTION_LIST_FRAGMENT_TAG);
-        transaction.commit();
-        getChildFragmentManager().executePendingTransactions();
     }
 
     @Override
@@ -272,7 +180,7 @@ public class ContributionsFragment
         if (nearbyNotificationCardView != null) {
             if (store.getBoolean("displayNearbyCardView", true)) {
                 if (nearbyNotificationCardView.cardViewVisibilityState
-                        == NearbyNotificationCardView.CardViewVisibilityState.READY) {
+                    == NearbyNotificationCardView.CardViewVisibilityState.READY) {
                     nearbyNotificationCardView.setVisibility(View.VISIBLE);
                 }
             } else {
@@ -282,18 +190,20 @@ public class ContributionsFragment
         showFragment(contributionsListFragment, CONTRIBUTION_LIST_FRAGMENT_TAG);
     }
 
-    /**
-     * Replace FrameLayout with MediaDetailPagerFragment, user will see details of selected media.
-     * Creates new one if null.
-     */
     private void showMediaDetailPagerFragment() {
         // hide tabs on media detail view is visible
-        ((MainActivity)getActivity()).hideTabs();
+        ((MainActivity) getActivity()).hideTabs();
         // hide nearby card view on media detail is visible
         nearbyNotificationCardView.setVisibility(View.GONE);
 
-        showFragment(mediaDetailPagerFragment,MEDIA_DETAIL_PAGER_FRAGMENT_TAG);
+        showFragment(mediaDetailPagerFragment, MEDIA_DETAIL_PAGER_FRAGMENT_TAG);
 
+    }
+
+    private void setupViewForMediaDetails() {
+        campaignView.setVisibility(View.GONE);
+        nearbyNotificationCardView.setVisibility(View.GONE);
+        ((MainActivity)getActivity()).hideTabs();
     }
 
     @Override
@@ -314,43 +224,47 @@ public class ContributionsFragment
 
     }
 
+    private void initFragments() {
+        if (null == contributionsListFragment) {
+            contributionsListFragment = new ContributionsListFragment(this);
+        }
+
+        if (shouldShowMediaDetailsFragment) {
+            showMediaDetailPagerFragment();
+        } else {
+            showContributionsListFragment();
+        }
+
+        showFragment(contributionsListFragment, CONTRIBUTION_LIST_FRAGMENT_TAG);
+    }
+
+    /**
+     * Replaces the root frame layout with the given fragment
+     *
+     * @param fragment
+     * @param tag
+     */
+    private void showFragment(Fragment fragment, String tag) {
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        transaction.replace(R.id.root_frame, fragment, tag);
+        transaction.addToBackStack(CONTRIBUTION_LIST_FRAGMENT_TAG);
+        transaction.commit();
+        getChildFragmentManager().executePendingTransactions();
+    }
+
     public Intent getUploadServiceIntent(){
         Intent intent = new Intent(getActivity(), UploadService.class);
         intent.setAction(UploadService.ACTION_START_SERVICE);
         return intent;
     }
 
-    /**
-     * Replace whatever is in the current contributionsFragmentContainer view with
-     * mediaDetailPagerFragment, and preserve previous state in back stack.
-     * Called when user selects a contribution.
-     */
-    private void showDetail(int i) {
-        if (mediaDetailPagerFragment == null || !mediaDetailPagerFragment.isVisible()) {
-            mediaDetailPagerFragment = new MediaDetailPagerFragment();
-            showMediaDetailPagerFragment();
-        }
-        mediaDetailPagerFragment.showImage(i);
-    }
-
     @Override
     public void refreshSource() {
-        contributionsPresenter.fetchContributions();
-    }
 
-    @Override
-    public Media getMediaAtPosition(int i) {
-        return contributionsPresenter.getItemAtPosition(i);
-    }
-
-    @Override
-    public int getTotalMediaCount() {
-        return numberOfContributions;
     }
 
     @SuppressWarnings("ConstantConditions")
     private void setUploadCount() {
-
         compositeDisposable.add(okHttpJsonApiClient
                 .getUploadCount(((MainActivity)getActivity()).sessionManager.getCurrentAccount().name)
                 .subscribeOn(Schedulers.io())
@@ -380,8 +294,6 @@ public class ContributionsFragment
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        boolean mediaDetailsVisible = mediaDetailPagerFragment != null && mediaDetailPagerFragment.isVisible();
-        outState.putBoolean("mediaDetailsVisible", mediaDetailsVisible);
     }
 
     @Override
@@ -410,10 +322,6 @@ public class ContributionsFragment
         }
 
         fetchCampaigns();
-        if(isAuthCookieAcquired){
-            contributionsPresenter.fetchContributions();
-        }
-
     }
 
     private void checkPermissionsAndShowNearbyCardView() {
@@ -470,17 +378,11 @@ public class ContributionsFragment
     }
 
     private void updateNearbyNotification(@Nullable NearbyController.NearbyPlacesInfo nearbyPlacesInfo) {
-
         if (nearbyPlacesInfo != null && nearbyPlacesInfo.placeList != null && nearbyPlacesInfo.placeList.size() > 0) {
             Place closestNearbyPlace = nearbyPlacesInfo.placeList.get(0);
             String distance = formatDistanceBetween(curLatLng, closestNearbyPlace.location);
             closestNearbyPlace.setDistance(distance);
             nearbyNotificationCardView.updateContent(closestNearbyPlace);
-            if (mediaDetailPagerFragment != null && mediaDetailPagerFragment.isVisible()) {
-                nearbyNotificationCardView.setVisibility(View.GONE);
-            }else {
-                nearbyNotificationCardView.setVisibility(View.VISIBLE);
-            }
         } else {
             // Means that no close nearby place is found
             nearbyNotificationCardView.setVisibility(View.GONE);
@@ -560,37 +462,13 @@ public class ContributionsFragment
         presenter.onDetachView();
     }
 
-    @Override
-    public void showWelcomeTip(boolean shouldShow) {
-        contributionsListFragment.showWelcomeTip(shouldShow);
-    }
-
-    @Override
-    public void showProgress(boolean shouldShow) {
-        contributionsListFragment.showProgress(shouldShow);
-    }
-
-    @Override
-    public void showNoContributionsUI(boolean shouldShow) {
-        contributionsListFragment.showNoContributionsUI(shouldShow);
-    }
-
-    @Override
-    public void setUploadCount(int count) {
-        this.numberOfContributions=count;
-    }
-
-    @Override
-    public void showContributions(List<Contribution> contributionList) {
-        contributionsListFragment.setContributions(contributionList);
-    }
-
     /**
      * Retry upload when it is failed
      *
      * @param contribution contribution to be retried
      */
-    private void retryUpload(Contribution contribution) {
+    @Override
+    public void retryUpload(Contribution contribution) {
         if (NetworkUtils.isInternetConnectionEstablished(getContext())) {
             if (contribution.getState() == STATE_FAILED && null != uploadService) {
                 uploadService.queue(UploadService.ACTION_UPLOAD_FILE, contribution);
@@ -602,6 +480,30 @@ public class ContributionsFragment
             ViewUtil.showLongToast(getContext(), R.string.this_function_needs_network_connection);
         }
 
+    }
+
+    /**
+     * Replace whatever is in the current contributionsFragmentContainer view with
+     * mediaDetailPagerFragment, and preserve previous state in back stack. Called when user selects a
+     * contribution.
+     */
+    @Override
+    public void showDetail(int position) {
+        if (mediaDetailPagerFragment == null || !mediaDetailPagerFragment.isVisible()) {
+            mediaDetailPagerFragment = new MediaDetailPagerFragment();
+            showMediaDetailPagerFragment();
+        }
+        mediaDetailPagerFragment.showImage(position);
+    }
+
+    @Override
+    public Media getMediaAtPosition(int i) {
+        return contributionsListFragment.getMediaAtPosition(i);
+    }
+
+    @Override
+    public int getTotalMediaCount() {
+        return contributionsListFragment.getTotalMediaCount();
     }
 }
 
