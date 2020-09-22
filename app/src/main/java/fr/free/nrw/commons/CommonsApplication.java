@@ -77,10 +77,16 @@ import timber.log.Timber;
 )
 
 public class CommonsApplication extends MultiDexApplication {
-    @Inject SessionManager sessionManager;
-    @Inject DBOpenHelper dbOpenHelper;
 
-    @Inject @Named("default_preferences") JsonKvStore defaultPrefs;
+  public static final String IS_LIMITED_CONNECTION_MODE_ENABLED = "is_limited_connection_mode_enabled";
+  @Inject
+  SessionManager sessionManager;
+  @Inject
+  DBOpenHelper dbOpenHelper;
+
+  @Inject
+  @Named("default_preferences")
+  JsonKvStore defaultPrefs;
 
     /**
      * Constants begin
